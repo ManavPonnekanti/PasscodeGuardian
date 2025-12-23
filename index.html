@@ -3,502 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Time Passcode Guardian</title>
+    <title>Passcode Guardian</title>
     <style>
-        /* --- Base & Typography --- */
-        :root {
-            --brand-color: #4f46e5;
-            --brand-color-hover: #4338ca;
-            --green-color: #16a34a;
-            --green-color-hover: #15803d;
-            --gray-color: #6b7280;
-            --gray-color-hover: #4b5563;
-            --light-gray: #f3f4f6;
-            --border-color: #d1d5db;
-            --text-dark: #1f2937;
-            --text-medium: #4b5563;
-            --text-light: #6b7280;
-        }
-
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: var(--light-gray);
-            color: var(--text-medium);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 500px;
+            margin: 2rem auto;
             padding: 1rem;
-            box-sizing: border-box;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f9fafb;
         }
-
-        /* --- Layout & Structure --- */
-        .container {
-            width: 100%;
-            max-width: 448px;
-            margin: auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .header h1 {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
-        }
-
-        .header p {
-            margin-top: 0.25rem;
-            color: var(--text-light);
-        }
-
+        
         .card {
-            background-color: white;
-            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
             padding: 2rem;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            margin-bottom: 1rem;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hidden { display: none; }
+        h1, h2 { margin-top: 0; text-align: center; }
+        
+        /* COMMAND BOX */
+        .command-box {
+            background: #fff;
+            border: 4px solid #333;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            margin: 2rem 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 220px;
         }
 
-        .step-card {
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-        }
-
-        .hidden-step {
-            opacity: 0;
-            transform: scale(0.95);
-            display: none;
-        }
-
-        h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #374151;
-            margin-top: 0;
+        .cmd-type {
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
             margin-bottom: 1rem;
         }
-        
-        .text-center {
-            text-align: center;
+
+        .cmd-value {
+            font-family: monospace;
+            font-size: 5rem;
+            font-weight: bold;
+            line-height: 1;
         }
 
-        /* --- Components --- */
-        .btn {
+        .state-type { color: #059669; } /* Green */
+        .state-back { color: #dc2626; } /* Red */
+        .state-wait { color: #6b7280; } /* Gray */
+        
+        button {
+            display: block;
             width: 100%;
-            font-weight: 600;
-            padding: 0.75rem 1rem;
+            padding: 1rem;
+            background: #000;
+            color: #fff;
             border: none;
-            border-radius: 0.5rem;
+            font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            margin-top: 1.5rem;
-        }
-        
-        .btn:hover {
-            transform: scale(1.02);
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background-color: var(--brand-color);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background-color: var(--brand-color-hover);
-        }
-        
-        .btn-green {
-            background-color: var(--green-color);
-            color: white;
-        }
-        .btn-green:hover:not(:disabled) {
-            background-color: var(--green-color-hover);
-        }
-        
-        .btn-gray {
-            background-color: var(--gray-color);
-            color: white;
-        }
-        .btn-gray:hover:not(:disabled) {
-            background-color: var(--gray-color-hover);
-        }
-
-        .info-list {
-            list-style-position: inside;
-            list-style-type: decimal;
-            background-color: var(--light-gray);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin: 0;
-        }
-        .info-list li + li {
-            margin-top: 0.5rem;
-        }
-        .info-list span {
+            margin-top: 1rem;
             font-weight: 600;
+            border-radius: 8px;
         }
-        .info-list .highlight {
-             color: #dc2626;
+        button:disabled { background: #d1d5db; cursor: not-allowed; color: #6b7280; }
+        
+        .secondary-btn {
+            background: #fff;
+            color: #000;
+            border: 2px solid #e5e7eb;
         }
 
-        .code-box {
-            background-color: var(--light-gray);
+        .speed-control {
+            margin-bottom: 2rem;
             padding: 1rem;
-            border-radius: 0.5rem;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
             text-align: center;
-            font-weight: 600;
-            color: var(--text-dark);
         }
+        input[type=range] { width: 100%; cursor: pointer; margin: 10px 0;}
+        .speed-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
 
-        .disclaimer-box {
-            border-left-width: 4px;
+        .success-msg { color: #059669; font-weight: bold; text-align: center; display: none; margin-top: 0.5rem;}
+        
+        .instruction-box {
+            background: #eef2ff;
+            border-left: 4px solid #4f46e5;
             padding: 1rem;
-            border-radius: 0 0.5rem 0.5rem 0;
-            margin-top: 1rem;
-        }
-        .disclaimer-box h3 {
-            margin: 0 0 0.25rem 0;
-            font-weight: 600;
-        }
-        .disclaimer-box p {
-            margin: 0;
-        }
-        .disclaimer-blue {
-            background-color: #eff6ff;
-            border-color: #3b82f6;
-        }
-        .disclaimer-blue h3 { color: #1e40af; }
-        .disclaimer-yellow {
-            background-color: #fefce8;
-            border-color: #eab308;
-        }
-        .disclaimer-yellow h3 { color: #854d0e; }
-        
-        .passcode-entry-box {
-            background-color: var(--light-gray);
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-        .obfuscation-status {
-            color: var(--brand-color);
-            font-weight: 600;
-            height: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .passcode-display {
-            width: 100%;
-            text-align: center;
-            font-size: 2.25rem;
-            font-weight: 700;
-            padding: 0.5rem;
-            background-color: white;
-            border-radius: 0.5rem;
-            color: var(--text-dark);
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: 0.5em;
-            -webkit-text-security: disc;
-            text-security: disc;
-        }
-        
-        .important-note {
-            font-size: 0.875rem;
-            color: #dc2626;
-            margin-top: 1rem;
-            font-weight: 600;
-        }
-        .important-note span {
-            text-decoration: underline;
-        }
-        
-        .icon-svg {
-            width: 4rem;
-            height: 4rem;
-            color: var(--green-color);
-            margin: 0 auto 1rem;
-        }
-        
-        .action-feedback {
-            margin-top: 1rem;
-            font-weight: 600;
-            color: var(--green-color);
-            opacity: 0;
-            transition: opacity 0.3s;
-            height: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>Screen Time Passcode Guardian</h1>
-            <p>Lock your apps, entrust the key.</p>
-        </header>
 
-        <main id="app-container" class="card">
-            <!-- Step 1: Initial Setup -->
-            <div id="step-1" class="step-card">
-                <h2>Step 1: Initial Device Setup</h2>
-                <p>On your iPhone/iPad:</p>
-                <ol class="info-list">
-                    <li>Go to <span>Settings > Screen Time</span> and set a temporary passcode you know.</li>
-                    <li>Go to <span>App Limits</span> and enable <span class="highlight">'Block at End of Limit'</span> for apps you want to control.</li>
-                </ol>
-                <button onclick="goToStep(2)" class="btn btn-primary">Next</button>
+    <div id="creator-app" class="hidden">
+        <h1>Passcode Guardian</h1>
+        
+        <div class="speed-control">
+            <label>Typing Speed: <span id="speedValue">1x (Normal)</span></label>
+            <input type="range" id="speedRange" min="1" max="3" step="0.5" value="1" oninput="updateSpeed(this.value)">
+            <div class="speed-labels">
+                <span>Slow</span>
+                <span>Fast</span>
             </div>
+        </div>
+        
+        <div id="step-1" class="step card">
+            <h2>1. Setup Device</h2>
+            <p>On your iPhone/iPad:</p>
+            <ol>
+                <li>Go to <b>Settings > Screen Time</b>.</li>
+                <li>Set a temporary passcode you know (e.g., 0000).</li>
+            </ol>
+            <button onclick="nextStep(2)">Next</button>
+        </div>
 
-            <!-- Step 2: Prepare for Change -->
-            <div id="step-2" class="step-card hidden-step">
-                <h2>Step 2: Prepare to Change Passcode</h2>
-                <p>On your device, navigate to:</p>
-                <div class="code-box">Settings > Screen Time > Change Passcode</div>
-                <p style="margin-top:1rem;">Enter your old passcode. Your device will then be ready for the 'New Passcode'.</p>
-                <button onclick="goToStep(3)" class="btn btn-primary">Next</button>
+        <div id="step-2" class="step card hidden">
+            <h2>2. Prepare Change</h2>
+            <ol>
+                <li>Go to <b>Change Screen Time Passcode</b>.</li>
+                <li>Enter your old code.</li>
+                <li>Wait until the screen says <b>"Enter New Passcode"</b>.</li>
+            </ol>
+            <button onclick="nextStep(3)">Next</button>
+        </div>
+
+        <div id="step-3" class="step card hidden">
+            <h2>3. Instructions</h2>
+            <div class="instruction-box">
+                <p><b>DO NOT LOOK AT THE PHONE SCREEN.</b></p>
+                <p>Look only at the box below. Trust the commands.</p>
+                <p>The system will ensure you never exceed 4 digits.</p>
             </div>
+            <button onclick="nextStep(4)">I'm Ready</button>
+        </div>
+
+        <div id="step-4" class="step hidden">
+            <h2>Enter New Code</h2>
+            <div class="command-box">
+                <div class="cmd-type state-wait" id="s4-type">GET READY</div>
+                <div class="cmd-value" id="s4-value">...</div>
+            </div>
+            <button id="s4-btn" onclick="nextStep(5)" disabled>Verification Required</button>
+        </div>
+
+        <div id="step-5" class="step hidden">
+            <h2>Verify Code</h2>
+            <div class="command-box">
+                <div class="cmd-type state-wait" id="s5-type">GET READY</div>
+                <div class="cmd-value" id="s5-value">...</div>
+            </div>
+            <button id="s5-btn" onclick="nextStep(6)" class="hidden">Next</button>
+        </div>
+
+        <div id="step-6" class="step card hidden">
+            <h2>6. Secure Link</h2>
+            <p>The passcode is saved in the link below. Send it to your trusted friend/guardian immediately.</p>
             
-            <!-- Step 3: Disclaimers -->
-            <div id="step-3" class="step-card hidden-step">
-                <h2>Step 3: Important Instructions</h2>
-                <div class="disclaimer-box disclaimer-blue">
-                    <h3>Use a Separate Device</h3>
-                    <p>You should be viewing this website on a separate device (like a laptop or tablet), NOT the phone you are setting the passcode on.</p>
-                </div>
-                <div class="disclaimer-box disclaimer-yellow">
-                    <h3>Relax Your Mind</h3>
-                    <p>The goal is to <strong>not</strong> remember the passcode. Do not make any effort to memorize the digits. Follow the prompts without thinking.</p>
-                </div>
-                <button onclick="goToStep(4)" class="btn btn-primary">I Understand, Begin</button>
+            <div style="text-align: center; background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <strong>Secret Link Generated</strong>
             </div>
+            <button onclick="copyLink()" id="copy-btn">Copy Link to Clipboard</button>
+            <div id="copy-success" class="success-msg">Copied! Send it now.</div>
+            <br>
+            <button class="secondary-btn" onclick="nextStep(7)">I have sent it</button>
+        </div>
 
-            <!-- Step 4: Enter Passcode -->
-            <div id="step-4" class="step-card hidden-step text-center">
-                <h2>Enter New Passcode</h2>
-                <div class="passcode-entry-box">
-                    <p class="obfuscation-status"></p>
-                    <input type="text" class="passcode-display" value="" readonly>
-                </div>
-                <button id="step-4-next-btn" onclick="goToStep(5)" class="btn btn-primary" style="opacity:0; pointer-events:none;">Ready to Verify</button>
-            </div>
+        <div id="step-7" class="step card hidden">
+            <h2>7. All Done</h2>
+            <p>Close this tab immediately to clear the memory.</p>
+            <button class="secondary-btn" onclick="location.reload()">Reset App</button>
+        </div>
+    </div>
 
-            <!-- Step 5: Verify Passcode -->
-            <div id="step-5" class="step-card hidden-step text-center">
-                <h2>Verify New Passcode</h2>
-                <div class="passcode-entry-box">
-                    <p class="obfuscation-status"></p>
-                    <input type="text" class="passcode-display" value="" readonly>
-                </div>
-                <button id="step-5-next-btn" onclick="goToStep(6)" style="display:none;"></button>
-            </div>
-
-            <!-- Step 6: Download Secure File -->
-            <div id="step-6" class="step-card hidden-step">
-                <h2>Step 6: Download Secure File</h2>
-                <p>The passcode is set. A text file containing the passcode will now be downloaded to your device. This file is not saved anywhere else.</p>
-                <p class="important-note">Send this file to your trusted friend <span>immediately</span>.</p>
-                <button id="download-file-btn" onclick="generateAndDownloadFile()" class="btn btn-green">Download Passcode File</button>
-                <div id="action-feedback" class="action-feedback text-center">File Downloaded!</div>
-            </div>
-
-            <!-- Step 7: Final Cleanup -->
-            <div id="step-7" class="step-card hidden-step">
-                <h2>Step 7: Final Cleanup</h2>
-                <p>The final, crucial step is to cover your tracks.</p>
-                <ol class="info-list">
-                    <li>Confirm that you have sent the downloaded file to your friend.</li>
-                    <li>Find the downloaded file in your 'Downloads' folder.</li>
-                    <li><span class="highlight">Securely delete the file from your device.</span></li>
-                </ol>
-                <button onclick="goToStep(8)" class="btn btn-primary">Done</button>
-            </div>
-            
-            <!-- Step 8: Finished -->
-            <div id="step-8" class="step-card hidden-step text-center">
-                 <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h2>Process Complete!</h2>
-                <p style="margin-bottom:1.5rem;">You have successfully set and secured your Screen Time passcode.</p>
-                <button onclick="goToStep(1)" class="btn btn-gray">Start Over</button>
-            </div>
-        </main>
+    <div id="guardian-app" class="card hidden">
+        <h2 style="color: #4f46e5;">🔒 Guardian Key</h2>
+        <p>A friend has entrusted you with their Screen Time passcode.</p>
+        <p>Only reveal this if they are in an emergency.</p>
+        <div id="reveal-area" class="hidden" style="text-align: center; margin: 2rem 0;">
+            <div style="font-size: 4rem; font-weight: bold; letter-spacing: 1rem;" id="revealed-code">----</div>
+        </div>
+        <button onclick="revealCode()" id="reveal-btn">Reveal Passcode</button>
+        <button class="secondary-btn" onclick="window.location.href = window.location.pathname.split('?')[0]">Create My Own Code</button>
     </div>
 
     <script>
-        // --- State Management ---
-        let currentStep = 1;
+        // --- STATE MANAGEMENT ---
         let passcode = '';
-        let isNavigating = false;
-        let isFirstSequenceComplete = false;
+        let speedMultiplier = 1; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const secretKey = urlParams.get('k');
 
-        // --- Navigation ---
-        function goToStep(stepNumber) {
-            // Debounce to prevent rapid clicks
-            if (isNavigating) return;
-
-            // Gate verification step
-            if (stepNumber === 5 && !isFirstSequenceComplete) {
-                console.error("Verification step gated. Please complete the first entry.");
-                return;
+        window.onload = function() {
+            if (secretKey) {
+                document.getElementById('guardian-app').classList.remove('hidden');
+            } else {
+                document.getElementById('creator-app').classList.remove('hidden');
+                document.getElementById('step-1').classList.remove('hidden');
             }
-            
-            isNavigating = true;
-            
-            document.getElementById(`step-${currentStep}`)?.classList.add('hidden-step');
-            document.getElementById(`step-${stepNumber}`)?.classList.remove('hidden-step');
-            currentStep = stepNumber;
+        };
 
-            // Reset state on first step
-            if (stepNumber === 1) {
-                passcode = '';
-                isFirstSequenceComplete = false;
-                const nextBtn = document.getElementById('step-4-next-btn');
-                if(nextBtn) {
-                   nextBtn.style.opacity = '0';
-                   nextBtn.style.pointerEvents = 'none';
-                }
-            } else if (stepNumber === 4) {
-                runObfuscationSequence('step-4', false);
-            } else if (stepNumber === 5) {
-                runObfuscationSequence('step-5', true);
-            }
-            
-            // Allow navigation again after transition ends
-            setTimeout(() => {
-                isNavigating = false;
-            }, 500);
+        function updateSpeed(val) {
+            speedMultiplier = parseFloat(val);
+            document.getElementById('speedValue').textContent = val + 'x';
         }
 
-        // --- Passcode Obfuscation Logic ---
-        async function runObfuscationSequence(stepId, isVerification) {
-            const stepContainer = document.getElementById(stepId);
-            const display = stepContainer.querySelector('.passcode-display');
-            const status = stepContainer.querySelector('.obfuscation-status');
-            
-            if (!isVerification) {
-                passcode = String(Math.floor(1000 + Math.random() * 9000));
-            }
-            
-            status.textContent = "Get ready... The sequence will start shortly.";
-            display.value = "";
-            await sleep(3000);
-            
-            let deviceState = ""; 
+        function nextStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.add('hidden'));
+            if (step === 1) passcode = ''; 
+            if (step === 4) startObfuscation('s4', false);
+            if (step === 5) startObfuscation('s5', true);
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+        }
 
-            for (let i = 0; i < 3; i++) {
-                const correctDigit = passcode[i];
-                let tempDeviceState = deviceState;
-                const jumbleRounds = isVerification ? (Math.floor(Math.random() * 2) + 2) : (Math.floor(Math.random() * 2) + 3);
+        // --- THE ENGINE (Fixed Logic for 3-Digit Cap) ---
+        async function startObfuscation(prefix, isVerify) {
+            const uiType = document.getElementById(`${prefix}-type`);
+            const uiValue = document.getElementById(`${prefix}-value`);
+            const btn = document.getElementById(`${prefix}-btn`);
+            
+            if (!isVerify) passcode = Math.floor(1000 + Math.random() * 9000).toString();
 
-                for (let j = 0; j < jumbleRounds; j++) {
-                    const maxDigitsToAdd = 3 - tempDeviceState.length;
-                    if (maxDigitsToAdd <= 0) break; 
-                    const numToAdd = Math.floor(Math.random() * maxDigitsToAdd) + 1;
-                    let addedDigits = "";
-                    for (let k = 0; k < numToAdd; k++) {
-                        addedDigits += getRandomDigit([...(correctDigit + tempDeviceState).split('')]);
-                    }
+            updateUI(uiType, uiValue, "WAIT", "...", "state-wait");
+            await wait(2000);
+
+            let currentPhoneLength = 0; 
+
+            // Loop ONLY for the first 3 digits
+            for (let i = 0; i < 3; i++) { 
+                const targetDigit = passcode[i];
+                const rounds = isVerify ? 2 : 3; 
+
+                // --- CONFUSION PHASE ---
+                for (let r = 0; r < rounds; r++) {
                     
-                    status.textContent = `TYPE: ${addedDigits}`;
-                    display.value = tempDeviceState + addedDigits;
-                    tempDeviceState += addedDigits;
-                    await sleep(1500 + numToAdd * 500);
+                    // CRITICAL FIX: The hard ceiling is 3. 
+                    // If we hit 4, iOS submits. So we can never allow currentPhoneLength >= 3
+                    // because adding even 1 digit would result in 4.
+                    
+                    // If currentPhoneLength is 3, we cannot add junk. We must skip to backspace or real digit.
+                    if (currentPhoneLength >= 3) break; 
+                    
+                    const maxSafeToAdd = 3 - currentPhoneLength;
+                    
+                    // Double check safety
+                    if (maxSafeToAdd < 1) break;
 
-                    const numToBackspace = Math.floor(Math.random() * addedDigits.length) + 1;
-                    status.textContent = `BACKSPACE ${numToBackspace} time(s)`;
-                    tempDeviceState = tempDeviceState.slice(0, -numToBackspace);
-                    display.value = tempDeviceState;
-                    await sleep(1500 + numToBackspace * 500);
+                    // A. ADD JUNK
+                    const addCount = Math.ceil(Math.random() * maxSafeToAdd);
+                    const junk = generateJunk(addCount);
+                    
+                    updateUI(uiType, uiValue, "TYPE", junk, "state-type");
+                    currentPhoneLength += addCount; 
+                    await wait(1500 + (addCount * 600));
+
+                    // B. DELETE JUNK
+                    const delCount = Math.ceil(Math.random() * addCount);
+                    updateUI(uiType, uiValue, "BACKSPACE", delCount, "state-back");
+                    currentPhoneLength -= delCount;
+                    await wait(1800);
                 }
-                
-                const extraDigits = tempDeviceState.length - i;
+
+                // --- CLEANUP PHASE ---
+                const extraDigits = currentPhoneLength - i;
                 if (extraDigits > 0) {
-                    status.textContent = `BACKSPACE ${extraDigits} time(s)`;
-                    display.value = deviceState.replace(/./g, '•');
-                    await sleep(2000);
+                    updateUI(uiType, uiValue, "BACKSPACE", extraDigits, "state-back");
+                    currentPhoneLength -= extraDigits;
+                    await wait(2000);
                 }
 
-                status.textContent = `TYPE: ${correctDigit}`;
-                deviceState += correctDigit;
-                display.value = deviceState; 
-                await sleep(600); 
-                display.value = deviceState.replace(/./g, '•');
-                await sleep(1000);
+                // --- REAL DIGIT PHASE ---
+                updateUI(uiType, uiValue, "TYPE", targetDigit, "state-type");
+                currentPhoneLength++; 
+                await wait(1500);
+                
+                updateUI(uiType, uiValue, "...", "", "state-wait");
+                await wait(500);
             }
-            
-            status.textContent = `TYPE FINAL DIGIT: ${passcode[3]}`;
-            display.value = '•••' + passcode[3];
-            await sleep(1500);
-            display.value = '••••';
 
-            if (!isVerification) {
-                status.textContent = "Ready for Verification";
-                isFirstSequenceComplete = true; // Gate unlocked
-                const nextBtn = document.getElementById('step-4-next-btn');
-                nextBtn.style.opacity = '1';
-                nextBtn.style.pointerEvents = 'auto';
+            // 4. The Final Digit
+            updateUI(uiType, uiValue, "TYPE FINAL", passcode[3], "state-type");
+            await wait(2000);
+
+            // 5. Finish
+            updateUI(uiType, uiValue, "COMPLETE", "✔", "state-type");
+            
+            if (!isVerify) {
+                btn.textContent = "Verify Passcode";
+                btn.disabled = false;
             } else {
-                status.textContent = "Verification Complete!";
-                await sleep(3000);
-                document.getElementById('step-5-next-btn').click();
+                await wait(1500);
+                nextStep(6);
             }
+        }
+
+        // --- HELPERS ---
+        function updateUI(elLabel, elValue, labelText, valueText, colorClass) {
+            elLabel.className = "cmd-type " + colorClass;
+            elValue.className = "cmd-value " + colorClass;
+            elLabel.textContent = labelText;
+            elValue.textContent = valueText;
+        }
+
+        function copyLink() {
+            const encoded = btoa(passcode);
+            const cleanUrl = window.location.href.split('?')[0];
+            const fullLink = `${cleanUrl}?k=${encoded}`;
+            navigator.clipboard.writeText(fullLink).then(() => {
+                document.getElementById('copy-success').style.display = 'block';
+            }).catch(err => { prompt("Copy this link manually:", fullLink); });
         }
         
-        // --- Download File Logic ---
-        function generateAndDownloadFile() {
-            const downloadBtn = document.getElementById('download-file-btn');
-            downloadBtn.disabled = true;
-
-            const fileContent = `
-SCREEN TIME PASSCODE
-
-This file contains the Screen Time passcode you requested to be generated.
-Please keep this file in a safe place.
-
-Passcode: ${passcode}
-            `;
-
-            const blob = new Blob([fileContent.trim()], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `screentime-passcode-${Date.now()}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            
-            const feedback = document.getElementById('action-feedback');
-            feedback.style.opacity = '1';
-            
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                goToStep(7);
-            }, 2000);
+        function revealCode() {
+            try {
+                const decoded = atob(secretKey);
+                document.getElementById('revealed-code').textContent = decoded;
+                document.getElementById('reveal-area').classList.remove('hidden');
+                document.getElementById('reveal-btn').classList.add('hidden');
+            } catch (e) { alert("Invalid link."); }
         }
 
-        // --- Utility Functions ---
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms / speedMultiplier));
+        const generateJunk = len => Array(len).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
 
-        function getRandomDigit(exclude = []) {
-            let digit;
-            do {
-                digit = String(Math.floor(Math.random() * 10));
-            } while (exclude.includes(digit));
-            return digit;
-        }
-
-        window.onload = () => { goToStep(1); };
     </script>
 </body>
 </html>
