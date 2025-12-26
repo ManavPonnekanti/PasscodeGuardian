@@ -15,6 +15,7 @@
             background-color: #f9fafb;
         }
         
+        /* Layout */
         .card {
             border: 1px solid #e5e7eb;
             padding: 2rem;
@@ -59,8 +60,9 @@
 
         .state-type { color: #059669; } /* Green */
         .state-back { color: #dc2626; } /* Red */
-        .state-wait { color: #6b7280; } /* Gray */
+        .state-wait { color: #9ca3af; } /* Light Gray */
         
+        /* Controls */
         button {
             display: block;
             width: 100%;
@@ -143,7 +145,7 @@
             <div class="instruction-box">
                 <p><b>DO NOT LOOK AT THE PHONE SCREEN.</b></p>
                 <p>Look only at the box below. Trust the commands.</p>
-                <p>The system will ensure you never exceed 4 digits.</p>
+                <p>Between every instruction, the box will briefly go blank.</p>
             </div>
             <button onclick="nextStep(4)">I'm Ready</button>
         </div>
@@ -226,7 +228,7 @@
             document.getElementById(`step-${step}`).classList.remove('hidden');
         }
 
-        // --- THE ENGINE (Fixed Logic for 3-Digit Cap) ---
+        // --- THE ENGINE ---
         async function startObfuscation(prefix, isVerify) {
             const uiType = document.getElementById(`${prefix}-type`);
             const uiValue = document.getElementById(`${prefix}-value`);
@@ -247,16 +249,8 @@
                 // --- CONFUSION PHASE ---
                 for (let r = 0; r < rounds; r++) {
                     
-                    // CRITICAL FIX: The hard ceiling is 3. 
-                    // If we hit 4, iOS submits. So we can never allow currentPhoneLength >= 3
-                    // because adding even 1 digit would result in 4.
-                    
-                    // If currentPhoneLength is 3, we cannot add junk. We must skip to backspace or real digit.
                     if (currentPhoneLength >= 3) break; 
-                    
                     const maxSafeToAdd = 3 - currentPhoneLength;
-                    
-                    // Double check safety
                     if (maxSafeToAdd < 1) break;
 
                     // A. ADD JUNK
@@ -267,11 +261,17 @@
                     currentPhoneLength += addCount; 
                     await wait(1500 + (addCount * 600));
 
+                    // *** BLANK FRAME ***
+                    await clearScreen(uiType, uiValue); 
+
                     // B. DELETE JUNK
                     const delCount = Math.ceil(Math.random() * addCount);
                     updateUI(uiType, uiValue, "BACKSPACE", delCount, "state-back");
                     currentPhoneLength -= delCount;
                     await wait(1800);
+
+                    // *** BLANK FRAME ***
+                    await clearScreen(uiType, uiValue); 
                 }
 
                 // --- CLEANUP PHASE ---
@@ -280,6 +280,9 @@
                     updateUI(uiType, uiValue, "BACKSPACE", extraDigits, "state-back");
                     currentPhoneLength -= extraDigits;
                     await wait(2000);
+                    
+                    // *** BLANK FRAME ***
+                    await clearScreen(uiType, uiValue); 
                 }
 
                 // --- REAL DIGIT PHASE ---
@@ -287,8 +290,9 @@
                 currentPhoneLength++; 
                 await wait(1500);
                 
+                // *** BLANK FRAME (Longer pause between real digits) ***
                 updateUI(uiType, uiValue, "...", "", "state-wait");
-                await wait(500);
+                await wait(1000);
             }
 
             // 4. The Final Digit
@@ -313,6 +317,13 @@
             elValue.className = "cmd-value " + colorClass;
             elLabel.textContent = labelText;
             elValue.textContent = valueText;
+        }
+
+        // Helper to flash a blank screen
+        async function clearScreen(uiType, uiValue) {
+            updateUI(uiType, uiValue, "...", "", "state-wait");
+            // The blank frame lasts 500ms (adjusted by speed slider)
+            await wait(500);
         }
 
         function copyLink() {
