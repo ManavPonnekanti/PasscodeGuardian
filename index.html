@@ -95,6 +95,76 @@
         input[type=range] { width: 100%; cursor: pointer; margin: 10px 0;}
         .speed-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
 
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        .setting-row small { display: block; color: #6b7280; }
+        .toggle { position: relative; width: 48px; height: 28px; flex: 0 0 auto; }
+        .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: #d1d5db;
+            cursor: pointer;
+            transition: background 160ms ease;
+        }
+        .toggle-track::after {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            top: 3px;
+            left: 3px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            transition: transform 160ms ease;
+        }
+        .toggle input:checked + .toggle-track { background: #4f46e5; }
+        .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+        .toggle input:focus-visible + .toggle-track { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+
+        .digit-progress {
+            display: flex;
+            gap: 0.65rem;
+            min-height: 14px;
+            margin-bottom: 1.5rem;
+        }
+        .digit-progress.hidden { display: none; }
+        .digit-dot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #9ca3af;
+            border-radius: 50%;
+            background: transparent;
+            transition: background 120ms ease, border-color 120ms ease;
+        }
+        .digit-dot.filled { background: #374151; border-color: #374151; }
+
+        .run-controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .run-controls button { margin-top: 0; }
+        .run-status {
+            min-height: 1.5rem;
+            margin: 0.75rem 0 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
         .success-msg { color: #059669; font-weight: bold; text-align: center; display: none; margin-top: 0.5rem;}
         
         .instruction-box {
@@ -112,11 +182,21 @@
         <h1>Passcode Guardian</h1>
         
         <div class="speed-control">
-            <label>Typing Speed: <span id="speedValue">1x (Normal)</span></label>
-            <input type="range" id="speedRange" min="1" max="3" step="0.5" value="1" oninput="updateSpeed(this.value)">
+            <label for="speedRange">Typing Speed: <span id="speedValue">1x (Normal)</span></label>
+            <input type="range" id="speedRange" min="1" max="3" step="0.5" value="1">
             <div class="speed-labels">
-                <span>Slow</span>
+                <span>Normal</span>
                 <span>Fast</span>
+            </div>
+            <div class="setting-row">
+                <label for="counterToggle">
+                    Show digit counter
+                    <small>Display how many digits are currently entered</small>
+                </label>
+                <label class="toggle" aria-label="Show digit counter">
+                    <input type="checkbox" id="counterToggle">
+                    <span class="toggle-track"></span>
+                </label>
             </div>
         </div>
         
@@ -127,7 +207,7 @@
                 <li>Go to <b>Settings > Screen Time</b>.</li>
                 <li>Set a temporary passcode you know (e.g., 0000).</li>
             </ol>
-            <button onclick="nextStep(2)">Next</button>
+            <button data-next-step="2">Next</button>
         </div>
 
         <div id="step-2" class="step card hidden">
@@ -137,7 +217,7 @@
                 <li>Enter your old code.</li>
                 <li>Wait until the screen says <b>"Enter New Passcode"</b>.</li>
             </ol>
-            <button onclick="nextStep(3)">Next</button>
+            <button data-next-step="3">Next</button>
         </div>
 
         <div id="step-3" class="step card hidden">
@@ -147,25 +227,34 @@
                 <p>Look only at the box below. Trust the commands.</p>
                 <p>Between every instruction, the box will briefly go blank.</p>
             </div>
-            <button onclick="nextStep(4)">I'm Ready</button>
+            <button data-next-step="4">I'm Ready</button>
         </div>
 
         <div id="step-4" class="step hidden">
             <h2>Enter New Code</h2>
-            <div class="command-box">
+            <div class="command-box" aria-live="polite">
+                <div class="digit-progress" id="s4-progress" aria-label="0 of 4 digits entered"></div>
                 <div class="cmd-type state-wait" id="s4-type">GET READY</div>
                 <div class="cmd-value" id="s4-value">...</div>
             </div>
-            <button id="s4-btn" onclick="nextStep(5)" disabled>Verification Required</button>
+            <div class="run-controls">
+                <button class="secondary-btn" id="s4-restart">Restart</button>
+            </div>
+            <p class="run-status" id="s4-status" role="status"></p>
+            <button id="s4-btn" data-next-step="5" disabled>Verification Required</button>
         </div>
 
         <div id="step-5" class="step hidden">
             <h2>Verify Code</h2>
-            <div class="command-box">
+            <div class="command-box" aria-live="polite">
+                <div class="digit-progress" id="s5-progress" aria-label="0 of 4 digits entered"></div>
                 <div class="cmd-type state-wait" id="s5-type">GET READY</div>
                 <div class="cmd-value" id="s5-value">...</div>
             </div>
-            <button id="s5-btn" onclick="nextStep(6)" class="hidden">Next</button>
+            <div class="run-controls">
+                <button class="secondary-btn" id="s5-restart">Restart</button>
+            </div>
+            <p class="run-status" id="s5-status" role="status"></p>
         </div>
 
         <div id="step-6" class="step card hidden">
@@ -175,16 +264,16 @@
             <div style="text-align: center; background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
                 <strong>Secret Link Generated</strong>
             </div>
-            <button onclick="copyLink()" id="copy-btn">Copy Link to Clipboard</button>
+            <button id="copy-btn">Copy Link to Clipboard</button>
             <div id="copy-success" class="success-msg">Copied! Send it now.</div>
             <br>
-            <button class="secondary-btn" onclick="nextStep(7)">I have sent it</button>
+            <button class="secondary-btn" data-next-step="7">I have sent it</button>
         </div>
 
         <div id="step-7" class="step card hidden">
             <h2>7. All Done</h2>
             <p>Close this tab immediately to clear the memory.</p>
-            <button class="secondary-btn" onclick="location.reload()">Reset App</button>
+            <button class="secondary-btn" id="reset-btn">Reset App</button>
         </div>
     </div>
 
@@ -195,158 +284,359 @@
         <div id="reveal-area" class="hidden" style="text-align: center; margin: 2rem 0;">
             <div style="font-size: 4rem; font-weight: bold; letter-spacing: 1rem;" id="revealed-code">----</div>
         </div>
-        <button onclick="revealCode()" id="reveal-btn">Reveal Passcode</button>
-        <button class="secondary-btn" onclick="window.location.href = window.location.pathname.split('?')[0]">Create My Own Code</button>
+        <button id="reveal-btn">Reveal Passcode</button>
+        <button class="secondary-btn" id="create-btn">Create My Own Code</button>
     </div>
 
     <script>
-        // --- STATE MANAGEMENT ---
-        let passcode = '';
-        let speedMultiplier = 1; 
-        const urlParams = new URLSearchParams(window.location.search);
-        const secretKey = urlParams.get('k');
+        'use strict';
 
-        window.onload = function() {
-            if (secretKey) {
-                document.getElementById('guardian-app').classList.remove('hidden');
-            } else {
-                document.getElementById('creator-app').classList.remove('hidden');
-                document.getElementById('step-1').classList.remove('hidden');
-            }
+        const PASSCODE_LENGTH = 4;
+        const SAFE_COMMAND_LENGTH = PASSCODE_LENGTH - 1;
+        const WALK_COMMANDS = 45;
+        const TOTAL_COMMANDS = WALK_COMMANDS + 1;
+        const READY_DURATION = 2200;
+        const COMMAND_DURATION = 1800;
+        const BLANK_DURATION = 650;
+
+        const state = {
+            passcode: '',
+            speedMultiplier: 1,
+            showCounter: false,
+            activeRun: 0,
+            restartPending: null
         };
 
-        function updateSpeed(val) {
-            speedMultiplier = parseFloat(val);
-            document.getElementById('speedValue').textContent = val + 'x';
+        const byId = id => document.getElementById(id);
+        const getSecretKey = () => {
+            const fragmentKey = new URLSearchParams(window.location.hash.slice(1)).get('k');
+            return fragmentKey || new URLSearchParams(window.location.search).get('k');
+        };
+
+        function initialise() {
+            const secretKey = getSecretKey();
+            if (secretKey) {
+                byId('guardian-app').classList.remove('hidden');
+            } else {
+                byId('creator-app').classList.remove('hidden');
+                byId('step-1').classList.remove('hidden');
+            }
+
+            document.querySelectorAll('[data-next-step]').forEach(button => {
+                button.addEventListener('click', () => nextStep(Number(button.dataset.nextStep)));
+            });
+            byId('speedRange').addEventListener('input', event => updateSpeed(event.target.value));
+            byId('counterToggle').addEventListener('change', event => {
+                state.showCounter = event.target.checked;
+                document.querySelectorAll('.digit-progress').forEach(progress => {
+                    progress.classList.toggle('hidden', !state.showCounter);
+                });
+            });
+            byId('copy-btn').addEventListener('click', copyLink);
+            byId('reset-btn').addEventListener('click', () => window.location.reload());
+            byId('reveal-btn').addEventListener('click', () => revealCode(secretKey));
+            byId('create-btn').addEventListener('click', () => {
+                window.location.href = `${window.location.origin}${window.location.pathname}`;
+            });
+
+            ['s4', 's5'].forEach(prefix => {
+                renderProgress(prefix, 0);
+                byId(`${prefix}-restart`).addEventListener('click', () => handleRestart(prefix));
+            });
+        }
+
+        function updateSpeed(value) {
+            state.speedMultiplier = Number.parseFloat(value);
+            const suffix = state.speedMultiplier === 1 ? ' (Normal)' : '';
+            byId('speedValue').textContent = `${state.speedMultiplier}x${suffix}`;
         }
 
         function nextStep(step) {
-            document.querySelectorAll('.step').forEach(el => el.classList.add('hidden'));
-            if (step === 1) passcode = ''; 
+            document.querySelectorAll('.step').forEach(element => element.classList.add('hidden'));
+            byId(`step-${step}`).classList.remove('hidden');
+
             if (step === 4) startObfuscation('s4', false);
             if (step === 5) startObfuscation('s5', true);
-            document.getElementById(`step-${step}`).classList.remove('hidden');
         }
 
-        // --- THE ENGINE ---
-        async function startObfuscation(prefix, isVerify) {
-            const uiType = document.getElementById(`${prefix}-type`);
-            const uiValue = document.getElementById(`${prefix}-value`);
-            const btn = document.getElementById(`${prefix}-btn`);
-            
-            if (!isVerify) passcode = Math.floor(1000 + Math.random() * 9000).toString();
+        async function startObfuscation(prefix, isVerification) {
+            const runId = ++state.activeRun;
+            const button = byId(`${prefix}-btn`);
+            const restartButton = byId(`${prefix}-restart`);
 
-            updateUI(uiType, uiValue, "WAIT", "...", "state-wait");
-            await wait(2000);
+            state.restartPending = null;
+            restartButton.textContent = 'Restart';
+            restartButton.disabled = false;
+            byId(`${prefix}-status`).textContent = '';
 
-            let currentPhoneLength = 0; 
-
-            // Loop ONLY for the first 3 digits
-            for (let i = 0; i < 3; i++) { 
-                const targetDigit = passcode[i];
-                const rounds = isVerify ? 2 : 3; 
-
-                // --- CONFUSION PHASE ---
-                for (let r = 0; r < rounds; r++) {
-                    
-                    if (currentPhoneLength >= 3) break; 
-                    const maxSafeToAdd = 3 - currentPhoneLength;
-                    if (maxSafeToAdd < 1) break;
-
-                    // A. ADD JUNK
-                    const addCount = Math.ceil(Math.random() * maxSafeToAdd);
-                    const junk = generateJunk(addCount);
-                    
-                    updateUI(uiType, uiValue, "TYPE", junk, "state-type");
-                    currentPhoneLength += addCount; 
-                    await wait(1500 + (addCount * 600));
-
-                    // *** BLANK FRAME ***
-                    await clearScreen(uiType, uiValue); 
-
-                    // B. DELETE JUNK
-                    const delCount = Math.ceil(Math.random() * addCount);
-                    updateUI(uiType, uiValue, "BACKSPACE", delCount, "state-back");
-                    currentPhoneLength -= delCount;
-                    await wait(1800);
-
-                    // *** BLANK FRAME ***
-                    await clearScreen(uiType, uiValue); 
-                }
-
-                // --- CLEANUP PHASE ---
-                const extraDigits = currentPhoneLength - i;
-                if (extraDigits > 0) {
-                    updateUI(uiType, uiValue, "BACKSPACE", extraDigits, "state-back");
-                    currentPhoneLength -= extraDigits;
-                    await wait(2000);
-                    
-                    // *** BLANK FRAME ***
-                    await clearScreen(uiType, uiValue); 
-                }
-
-                // --- REAL DIGIT PHASE ---
-                updateUI(uiType, uiValue, "TYPE", targetDigit, "state-type");
-                currentPhoneLength++; 
-                await wait(1500);
-                
-                // *** BLANK FRAME (Longer pause between real digits) ***
-                updateUI(uiType, uiValue, "...", "", "state-wait");
-                await wait(1000);
+            if (!isVerification) {
+                if (!state.passcode) state.passcode = secureDigits(PASSCODE_LENGTH);
+                button.disabled = true;
+                button.textContent = 'Verification Required';
             }
 
-            // 4. The Final Digit
-            updateUI(uiType, uiValue, "TYPE FINAL", passcode[3], "state-type");
-            await wait(2000);
+            if (!/^\d{4}$/.test(state.passcode)) {
+                showEngineError(prefix);
+                return;
+            }
 
-            // 5. Finish
-            updateUI(uiType, uiValue, "COMPLETE", "✔", "state-type");
-            
-            if (!isVerify) {
-                btn.textContent = "Verify Passcode";
-                btn.disabled = false;
-            } else {
-                await wait(1500);
-                nextStep(6);
+            try {
+                const plan = createObfuscationPlan(state.passcode);
+                validatePlan(plan, state.passcode);
+                await playPlan(prefix, plan, runId);
+                if (runId !== state.activeRun) return;
+
+                updateCommand(prefix, 'COMPLETE', '✔', 'state-type');
+                restartButton.disabled = true;
+                if (!isVerification) {
+                    button.textContent = 'Verify Passcode';
+                    button.disabled = false;
+                } else {
+                    await wait(1500);
+                    if (runId === state.activeRun) nextStep(6);
+                }
+            } catch (error) {
+                console.error('Obfuscation failed:', error);
+                showEngineError(prefix);
             }
         }
 
-        // --- HELPERS ---
-        function updateUI(elLabel, elValue, labelText, valueText, colorClass) {
-            elLabel.className = "cmd-type " + colorClass;
-            elValue.className = "cmd-value " + colorClass;
-            elLabel.textContent = labelText;
-            elValue.textContent = valueText;
+        function handleRestart(prefix) {
+            if (state.restartPending === prefix) {
+                startObfuscation(prefix, prefix === 's5');
+                return;
+            }
+
+            ++state.activeRun;
+            state.restartPending = prefix;
+            updateCommand(prefix, 'BACKSPACE', '3', 'state-back');
+            renderProgress(prefix, 0);
+            byId(`${prefix}-status`).textContent =
+                'Press backspace three times on your phone, then select Start Again.';
+            byId(`${prefix}-restart`).textContent = 'Start Again';
         }
 
-        // Helper to flash a blank screen
-        async function clearScreen(uiType, uiValue) {
-            updateUI(uiType, uiValue, "...", "", "state-wait");
-            // The blank frame lasts 500ms (adjusted by speed slider)
-            await wait(500);
+        function createObfuscationPlan(passcode) {
+            const targetPrefix = passcode.slice(0, SAFE_COMMAND_LENGTH);
+            const memo = new Map();
+            const countPaths = (buffer, remaining) => {
+                const key = `${buffer}|${remaining}`;
+                if (memo.has(key)) return memo.get(key);
+                if (remaining === 0) return buffer === targetPrefix ? 1n : 0n;
+
+                let total = 0n;
+                for (const transition of getTransitions(buffer)) {
+                    total += countPaths(transition.buffer, remaining - 1);
+                }
+                memo.set(key, total);
+                return total;
+            };
+
+            const plan = [];
+            let buffer = '';
+            for (let index = 0; index < WALK_COMMANDS; index++) {
+                const remaining = WALK_COMMANDS - index - 1;
+                const options = getTransitions(buffer)
+                    .map(transition => ({
+                        ...transition,
+                        weight: countPaths(transition.buffer, remaining)
+                    }))
+                    .filter(option => option.weight > 0n);
+                const totalWeight = options.reduce((sum, option) => sum + option.weight, 0n);
+                let selection = secureBigIntBelow(totalWeight);
+                let selected = options[0];
+
+                for (const option of options) {
+                    if (selection < option.weight) {
+                        selected = option;
+                        break;
+                    }
+                    selection -= option.weight;
+                }
+
+                buffer = selected.buffer;
+                plan.push({
+                    type: selected.type,
+                    value: selected.value,
+                    afterLength: buffer.length
+                });
+            }
+
+            plan.push({ type: 'type', value: passcode[SAFE_COMMAND_LENGTH], afterLength: PASSCODE_LENGTH });
+            return plan;
         }
 
-        function copyLink() {
-            const encoded = btoa(passcode);
-            const cleanUrl = window.location.href.split('?')[0];
-            const fullLink = `${cleanUrl}?k=${encoded}`;
-            navigator.clipboard.writeText(fullLink).then(() => {
-                document.getElementById('copy-success').style.display = 'block';
-            }).catch(err => { prompt("Copy this link manually:", fullLink); });
+        function getTransitions(buffer) {
+            const transitions = [];
+            if (buffer.length < SAFE_COMMAND_LENGTH) {
+                for (let digit = 0; digit <= 9; digit++) {
+                    transitions.push({ type: 'type', value: String(digit), buffer: buffer + digit });
+                }
+            }
+            if (buffer.length > 0) {
+                transitions.push({ type: 'backspace', value: 1, buffer: buffer.slice(0, -1) });
+            }
+            return transitions;
         }
-        
-        function revealCode() {
+
+        function validatePlan(plan, passcode) {
+            if (plan.length !== TOTAL_COMMANDS) {
+                throw new Error('The plan does not have the required fixed length.');
+            }
+
+            let simulated = '';
+            plan.forEach((command, index) => {
+                const isFinalCommand = index === plan.length - 1;
+                if (command.type === 'type') {
+                    simulated += command.value;
+                    if (!/^\d$/.test(command.value)) {
+                        throw new Error('A type command must contain exactly one digit.');
+                    }
+                    if (!isFinalCommand && simulated.length > SAFE_COMMAND_LENGTH) {
+                        throw new Error('A type command could auto-advance early.');
+                    }
+                } else if (command.type === 'backspace') {
+                    if (command.value !== 1 || simulated.length === 0) {
+                        throw new Error('An invalid backspace command was generated.');
+                    }
+                    simulated = simulated.slice(0, -1);
+                } else {
+                    throw new Error('An unknown command was generated.');
+                }
+
+                if (simulated.length !== command.afterLength) {
+                    throw new Error('Command length metadata is inconsistent.');
+                }
+
+                if (isFinalCommand && simulated !== passcode) {
+                    throw new Error('The final command does not produce the selected passcode.');
+                }
+            });
+
+            if (simulated !== passcode) throw new Error('Plan does not produce the selected passcode.');
+        }
+
+        async function playPlan(prefix, plan, runId) {
+            renderProgress(prefix, 0);
+            updateCommand(prefix, 'GET READY', '...', 'state-wait');
+            await wait(READY_DURATION);
+
+            for (let index = 0; index < plan.length; index++) {
+                if (runId !== state.activeRun) return;
+
+                const command = plan[index];
+                const isFinalCommand = index === plan.length - 1;
+                if (isFinalCommand) byId(`${prefix}-restart`).disabled = true;
+                const label = command.type === 'backspace' ? 'BACKSPACE' : 'TYPE';
+                const color = command.type === 'backspace' ? 'state-back' : 'state-type';
+                updateCommand(prefix, label, command.value, color);
+                renderProgress(prefix, command.afterLength);
+                await wait(COMMAND_DURATION);
+                if (runId !== state.activeRun) return;
+
+                updateCommand(prefix, '...', '', 'state-wait');
+                await wait(BLANK_DURATION);
+            }
+        }
+
+        function updateCommand(prefix, label, value, colorClass) {
+            const labelElement = byId(`${prefix}-type`);
+            const valueElement = byId(`${prefix}-value`);
+            labelElement.className = `cmd-type ${colorClass}`;
+            valueElement.className = `cmd-value ${colorClass}`;
+            labelElement.textContent = label;
+            valueElement.textContent = value;
+        }
+
+        function renderProgress(prefix, count) {
+            const progress = byId(`${prefix}-progress`);
+            progress.replaceChildren(...Array.from({ length: PASSCODE_LENGTH }, (_, index) => {
+                const dot = document.createElement('span');
+                dot.className = `digit-dot${index < count ? ' filled' : ''}`;
+                return dot;
+            }));
+            progress.classList.toggle('hidden', !state.showCounter);
+            progress.setAttribute('aria-label', `${count} of ${PASSCODE_LENGTH} digits entered`);
+        }
+
+        function showEngineError(prefix) {
+            updateCommand(prefix, 'ERROR', '↻', 'state-back');
+            renderProgress(prefix, 0);
+            alert('The sequence could not be generated safely. Please reload and try again.');
+        }
+
+        async function copyLink() {
+            if (!/^\d{4}$/.test(state.passcode)) return;
+
+            // A fragment is not sent to the web server, unlike a query parameter.
+            const encoded = btoa(state.passcode);
+            const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+            const fullLink = `${cleanUrl}#k=${encodeURIComponent(encoded)}`;
+
+            try {
+                await navigator.clipboard.writeText(fullLink);
+                byId('copy-success').style.display = 'block';
+            } catch (error) {
+                window.prompt('Copy this link manually:', fullLink);
+            }
+        }
+
+        function revealCode(secretKey) {
             try {
                 const decoded = atob(secretKey);
-                document.getElementById('revealed-code').textContent = decoded;
-                document.getElementById('reveal-area').classList.remove('hidden');
-                document.getElementById('reveal-btn').classList.add('hidden');
-            } catch (e) { alert("Invalid link."); }
+                if (!/^\d{4}$/.test(decoded)) throw new Error('Invalid passcode');
+                byId('revealed-code').textContent = decoded;
+                byId('reveal-area').classList.remove('hidden');
+                byId('reveal-btn').classList.add('hidden');
+            } catch (error) {
+                alert('This guardian link is invalid.');
+            }
         }
 
-        const wait = ms => new Promise(resolve => setTimeout(resolve, ms / speedMultiplier));
-        const generateJunk = len => Array(len).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
+        function secureBigIntBelow(limit) {
+            if (typeof limit !== 'bigint' || limit <= 0n) {
+                throw new RangeError('secureBigIntBelow requires a positive limit.');
+            }
 
+            const bitLength = limit.toString(2).length;
+            const byteLength = Math.ceil(bitLength / 8);
+            const unusedBits = (byteLength * 8) - bitLength;
+            const bytes = new Uint8Array(byteLength);
+
+            while (true) {
+                crypto.getRandomValues(bytes);
+                if (unusedBits > 0) bytes[0] &= 0xff >>> unusedBits;
+                let value = 0n;
+                for (const byte of bytes) value = (value << 8n) | BigInt(byte);
+                if (value < limit) return value;
+            }
+        }
+
+        function secureInteger(min, max) {
+            if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+                throw new RangeError('Invalid secureInteger range.');
+            }
+
+            const range = max - min + 1;
+            const maxUnbiasedValue = Math.floor(0x100000000 / range) * range;
+            const buffer = new Uint32Array(1);
+            let value;
+            do {
+                crypto.getRandomValues(buffer);
+                value = buffer[0];
+            } while (value >= maxUnbiasedValue);
+            return min + (value % range);
+        }
+
+        function secureDigits(length) {
+            return Array.from({ length }, () => secureInteger(0, 9)).join('');
+        }
+
+        const wait = milliseconds => new Promise(resolve => {
+            window.setTimeout(resolve, milliseconds / state.speedMultiplier);
+        });
+
+        window.addEventListener('DOMContentLoaded', initialise);
     </script>
 </body>
 </html>
